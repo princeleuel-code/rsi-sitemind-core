@@ -1,0 +1,129 @@
+name: CANA Work OS Candidate Court
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration-court:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout candidate core
+        uses: actions/checkout@v4
+        with:
+          path: cana-integration/rsi-sitemind-core
+          fetch-depth: 0
+
+      - name: Checkout protected core baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 9333c1d572a6be39df30e98ee07c451624190a8f
+          path: baseline/rsi-sitemind-core
+          fetch-depth: 0
+
+      - name: Checkout candidate evaluations
+        uses: actions/checkout@v4
+        with:
+          repository: princeleuel-code/rsi-evaluations
+          ref: candidate/cana-sovereign-work-os-v0.1.0
+          path: cana-integration/integration/rsi-evaluations
+          fetch-depth: 0
+
+      - name: Checkout candidate skills
+        uses: actions/checkout@v4
+        with:
+          repository: princeleuel-code/rsi-skills
+          ref: candidate/cana-sovereign-work-os-v0.1.0
+          path: cana-integration/rsi-skills
+          fetch-depth: 0
+
+      - name: Checkout governed connectors
+        uses: actions/checkout@v4
+        with:
+          repository: princeleuel-code/rsi-domain-connectors
+          ref: 4b48c13f83764b5f85c145b460044aa19711991d
+          path: cana-integration/rsi-domain-connectors
+          fetch-depth: 0
+
+      - name: Checkout governed Hermes bridge
+        uses: actions/checkout@v4
+        with:
+          repository: princeleuel-code/rsi-hermes-bridge
+          ref: b0d067939dbec69520706adcc38f43a9168c8fe6
+          path: cana-integration/rsi-hermes-bridge
+          fetch-depth: 0
+
+      - name: Configure Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install court dependencies
+        run: python -m pip install --disable-pip-version-check pytest cryptography jsonschema
+
+      - name: Reproduce sibling layout
+        run: |
+          ln -s ../rsi-sitemind-core cana-integration/integration/rsi-sitemind-core
+          ln -s ../rsi-domain-connectors cana-integration/integration/rsi-domain-connectors
+          ln -s ../rsi-hermes-bridge cana-integration/integration/rsi-hermes-bridge
+          mkdir -p court-receipts
+
+      - name: Record exact repository state
+        run: |
+          {
+            echo "core_candidate=$(git -C cana-integration/rsi-sitemind-core rev-parse HEAD)"
+            echo "core_baseline=$(git -C baseline/rsi-sitemind-core rev-parse HEAD)"
+            echo "evaluations_candidate=$(git -C cana-integration/integration/rsi-evaluations rev-parse HEAD)"
+            echo "skills_candidate=$(git -C cana-integration/rsi-skills rev-parse HEAD)"
+            echo "connectors=$(git -C cana-integration/rsi-domain-connectors rev-parse HEAD)"
+            echo "bridge=$(git -C cana-integration/rsi-hermes-bridge rev-parse HEAD)"
+            python --version
+            uname -a
+          } | tee court-receipts/REPOSITORY_STATE.txt
+
+      - name: Run protected baseline tests
+        working-directory: baseline/rsi-sitemind-core
+        run: python -m pytest -q | tee ../../court-receipts/BASELINE_PYTEST.txt
+
+      - name: Run candidate tests
+        working-directory: cana-integration/rsi-sitemind-core
+        run: python -m pytest -q | tee ../../court-receipts/CANDIDATE_PYTEST.txt
+
+      - name: Run protected nineteen-attack court
+        working-directory: cana-integration/integration/rsi-evaluations
+        run: |
+          python run_attack_court.py | tee ../../../court-receipts/BASELINE_ATTACK_COURT.txt
+          cp ATTACK_COURT_RECEIPT.json ../../../court-receipts/
+
+      - name: Run hardened Work OS court
+        working-directory: cana-integration/integration/rsi-evaluations
+        run: |
+          python run_work_os_court.py | tee ../../../court-receipts/WORK_OS_COURT.txt
+          cp WORK_OS_COURT_RECEIPT.json ../../../court-receipts/
+
+      - name: Validate skill contracts and routing fixtures
+        working-directory: cana-integration/integration/rsi-evaluations
+        run: |
+          python validate_skill_contracts.py | tee ../../../court-receipts/SKILL_CONTRACTS.txt
+          cp SKILL_CONTRACT_VALIDATION_RECEIPT.json ../../../court-receipts/
+
+      - name: Run observe-only shadow rehearsal
+        working-directory: cana-integration/integration/rsi-evaluations
+        run: |
+          python run_shadow_heartbeats.py | tee ../../../court-receipts/SHADOW_REHEARSAL.txt
+          cp SHADOW_HEARTBEAT_REHEARSAL_RECEIPT.json ../../../court-receipts/
+
+      - name: Hash court outputs
+        run: find court-receipts -type f -print0 | sort -z | xargs -0 sha256sum | tee court-receipts/SHA256SUMS
+
+      - name: Upload independently reviewable court outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: cana-work-os-candidate-court
+          path: court-receipts
+          if-no-files-found: error
