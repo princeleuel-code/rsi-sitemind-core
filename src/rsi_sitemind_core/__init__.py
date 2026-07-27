@@ -14,8 +14,20 @@ from .feedback import (
     PromotionRecommendation, RegressionCase, ReplayScore,
 )
 from .routing import ModelEndpoint, ProviderNeutralRouter, RouteDecision, RouteRequest
-from .truthgraph import TruthGraph, TruthNode, TruthState
+from .truthgraph import (
+    SignedTruthVerifier, TruthGraph, TruthNode, TruthState, TruthVerificationBundle,
+    TruthVerificationDecision, claim_digest,
+)
 from .vault import CANAVault, VaultValidationResult
+from .memory_security import (
+    IngestionOutcome, InputTrustClass, MemoryIngestionDecision, MemoryIngestionPolicy,
+    MemoryIngestionRequest,
+)
+from .replay import (
+    AuthorizedReplayCorpus, FeedbackCategory, RedactedFeedbackRecord, ReplayCorpusValidation,
+)
+from .shadow import ReadOnlyShadowHeartbeatRunner, ShadowHeartbeatReceipt, ShadowSource
+from .skill_validation import SkillDocumentValidation, SkillRegistryDocumentValidator
 from .work_os import (
     AutonomyLevel, DurableMemory, EvidenceReference, HeartbeatGovernor, HeartbeatKind,
     HeartbeatRun, HeartbeatRunStatus, HeartbeatSpec, MemoryRegistry, MemoryStatus,
@@ -36,5 +48,10 @@ __all__ = [
     "SkillRegistry", "SkillSpec", "SkillUsage", "ModelEndpoint", "ProviderNeutralRouter",
     "RouteDecision", "RouteRequest", "FeedbackEvent", "FeedbackToCapabilityCompiler",
     "CandidateCapabilityPatch", "RegressionCase", "ReplayScore", "PromotionRecommendation",
-    "TruthGraph", "TruthNode", "TruthState", "CANAVault", "VaultValidationResult",
+    "TruthGraph", "TruthNode", "TruthState", "SignedTruthVerifier", "TruthVerificationBundle",
+    "TruthVerificationDecision", "claim_digest", "CANAVault", "VaultValidationResult",
+    "InputTrustClass", "IngestionOutcome", "MemoryIngestionRequest", "MemoryIngestionDecision",
+    "MemoryIngestionPolicy", "AuthorizedReplayCorpus", "FeedbackCategory", "RedactedFeedbackRecord",
+    "ReplayCorpusValidation", "ReadOnlyShadowHeartbeatRunner", "ShadowHeartbeatReceipt", "ShadowSource",
+    "SkillDocumentValidation", "SkillRegistryDocumentValidator",
 ]
