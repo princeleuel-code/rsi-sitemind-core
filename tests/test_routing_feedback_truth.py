@@ -22,10 +22,7 @@ def test_provider_router_fails_closed_when_privacy_policy_cannot_be_met():
 
 
 def event(event_id, session_id):
-    return FeedbackEvent(
-        event_id, session_id, "mission-1", "ORDERWEEDDC", "brand-voice", "UNWANTED_LIGHT_GREEN",
-        "Use the approved dark green rather than light green", "Applied approved dark green", True, 0.95,
-    )
+    return FeedbackEvent(event_id, session_id, "mission-1", "ORDERWEEDDC", "brand-voice", "UNWANTED_LIGHT_GREEN", "Use the approved dark green rather than light green", "Applied approved dark green", True, 0.95)
 
 
 def test_feedback_compiler_requires_repetition_and_never_auto_promotes():
@@ -46,7 +43,7 @@ def test_replay_recommendation_rejects_safety_regression():
     assert any("safety" in reason for reason in recommendation.reasons)
 
 
-def test_truthgraph_refuses_unsupported_verified_claims():
+def test_truthgraph_refuses_all_legacy_unbound_verified_claims():
     graph = TruthGraph()
     with pytest.raises(PermissionError):
         graph.add(TruthNode("node-0", "CANA", "system deployed", TruthState.VERIFIED))
@@ -54,6 +51,4 @@ def test_truthgraph_refuses_unsupported_verified_claims():
     graph.transition("node-1", TruthState.ATTEMPTED)
     graph.transition("node-1", TruthState.COMPLETED_UNVERIFIED)
     with pytest.raises(PermissionError):
-        graph.transition("node-1", TruthState.VERIFIED)
-    verified = graph.transition("node-1", TruthState.VERIFIED, evidence_references=("commit-sha", "test-report"))
-    assert verified.state == TruthState.VERIFIED
+        graph.transition("node-1", TruthState.VERIFIED, evidence_references=("commit-sha", "test-report"))
